@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #ffffff;
+  --text: #0a2a5e;
+}
+
+html,
+body {
+  font-family: var(--font-manrope), "Avenir Next", "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hero-word-slot {
+  display: inline-grid;
+  vertical-align: baseline;
+}
+
+.hero-word-item {
+  grid-area: 1 / 1;
+  text-align: right;
+}
+
+.hero-word-flip {
+  animation: hero-word-flip 450ms ease;
+  transform-origin: center;
+}
+
+@keyframes hero-word-flip {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) rotateX(-75deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
+}
+
+@theme {
+  --color-navy: #142a5c;
+  --color-navy-light: #1c3a7a;
+  --color-navy-dark: #0f2148;
+  --color-teal: #2aa89c;
+  --color-teal-light: #edf7f6;
+  --color-page-bg: #f3f4f6;
+  --color-card-bg: #f7f8fa;
+  --color-text-primary: #101b3d;
+  --color-text-secondary: #64748b;
+}
+
+/* Smooth step transitions */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flow-fade {
+  animation: fadeSlideIn 0.3s ease-out;
+}
+
+/* ── Vertical scrolling flow (StitchFix-style) ── */
+.flow-viewport {
+  overflow: hidden;
+  position: relative;
+}
+
+.flow-track {
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.flow-step[data-active="false"] {
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.flow-step[data-active="true"] {
+  overflow-y: auto;
+}
+
+/* ── Animation frame staggered text ── */
+.anim-line-1 {
+  opacity: 0;
+  animation: fadeSlideIn 0.5s ease-out 0.2s both;
+}
+.anim-line-2 {
+  opacity: 0;
+  animation: fadeSlideIn 0.5s ease-out 0.9s both;
+}
+.anim-line-3 {
+  opacity: 0;
+  animation: fadeSlideIn 0.5s ease-out 1.6s both;
+}
+.anim-line-3-delayed {
+  opacity: 0;
+  animation: fadeSlideIn 0.5s ease-out 1.4s both;
+}

@@ -1,0 +1,9 @@
+<svg width="520" height="140" viewBox="0 0 520 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <path d="M84 24C72 8 53 8 42 17C31 26 32 40 44 49C55 58 72 57 84 41" stroke="#85CFC4" stroke-width="7" stroke-linecap="round"/>
+    <path d="M84 24C96 8 115 8 126 17C137 26 136 40 124 49C113 58 96 57 84 41" stroke="#85CFC4" stroke-width="7" stroke-linecap="round"/>
+    <path d="M84 34V50" stroke="#85CFC4" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="84" cy="62" r="10" fill="#85CFC4"/>
+  </g>
+  <text x="10" y="125" font-family="Manrope, Avenir Next, Segoe UI, sans-serif" font-size="108" font-weight="800" letter-spacing="-2" fill="#6E7177">gifterbell</text>
+</svg>
