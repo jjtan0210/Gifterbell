@@ -385,12 +385,15 @@ export function FlowViewport({
   }, []);
 
   useEffect(() => {
-    measureSteps();
+    const raf = requestAnimationFrame(() => measureSteps());
     const track = trackRef.current;
-    if (!track) return;
+    if (!track) return () => cancelAnimationFrame(raf);
     const ro = new ResizeObserver(() => measureSteps());
     ro.observe(track);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, [measureSteps, stepCount]);
 
   // Compute translateY offset: sum of heights of steps before currentIdx
