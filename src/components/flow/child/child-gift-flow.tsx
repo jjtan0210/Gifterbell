@@ -1,17 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Baby, PawPrint, UserRound,
   Dog, Palette, Hammer, Car, House, Drama, Bone as DinoIcon,
-  BookOpen, Music, Puzzle, Gamepad2, Microscope, Dribbble, TreePine,
+  BookOpen, Music, Puzzle, Gamepad2, Microscope, Trophy, TreePine,
   Monitor, CookingPot, Flower2, Rocket, Calendar,
 } from "lucide-react";
 import { OccasionIllustration } from "./occasion-illustrations";
 import {
   AGE_RANGES,
-  AVOIDANCE_OPTIONS,
   BUDGET_OPTIONS,
   ChildFlowData,
   INITIAL_CHILD_FLOW,
@@ -29,7 +28,6 @@ import {
   validateStep,
 } from "./logic";
 import {
-  Chip,
   Field,
   FlowStep,
   FlowViewport,
@@ -120,14 +118,6 @@ export function ChildGiftFlow() {
     setError("");
   }
 
-  function toggleAvoidance(item: string) {
-    setData((prev) => {
-      const exists = prev.avoidances.includes(item);
-      const next = exists ? prev.avoidances.filter((x) => x !== item) : [...prev.avoidances, item];
-      return { ...prev, avoidances: next };
-    });
-  }
-
   function goBack() {
     if (currentIdx === 0) {
       window.location.href = "/";
@@ -147,7 +137,7 @@ export function ChildGiftFlow() {
 
   async function submitOrder() {
     setSubmitting(true);
-    setError(null);
+    setError("");
     try {
       const { error: dbError } = await supabase.from("gift_orders").insert({
         customer_first_name: data.customerFirstName,
@@ -183,8 +173,8 @@ export function ChildGiftFlow() {
       });
       if (dbError) throw dbError;
       setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -607,7 +597,7 @@ export function ChildGiftFlow() {
           "Puzzles": <Puzzle className="h-4 w-4 shrink-0" />,
           "Games": <Gamepad2 className="h-4 w-4 shrink-0" />,
           "Science & STEM": <Microscope className="h-4 w-4 shrink-0" />,
-          "Sports & Active Play": <Dribbble className="h-4 w-4 shrink-0" />,
+          "Sports & Active Play": <Trophy className="h-4 w-4 shrink-0" />,
           "Outdoor Play": <TreePine className="h-4 w-4 shrink-0" />,
           "Video Games": <Monitor className="h-4 w-4 shrink-0" />,
           "Cooking & Baking": <CookingPot className="h-4 w-4 shrink-0" />,
