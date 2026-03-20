@@ -359,13 +359,6 @@ export function FlowViewport({
   const [viewportHeight, setViewportHeight] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  // Reset scroll position on mount (Next.js scroll restoration can set scrollTop on overflow:hidden elements)
-  useEffect(() => {
-    if (viewportRef.current) {
-      viewportRef.current.scrollTop = 0;
-    }
-  }, []);
-
   // Measure viewport height
   useEffect(() => {
     const el = viewportRef.current;
@@ -402,6 +395,23 @@ export function FlowViewport({
       ro.disconnect();
     };
   }, [measureSteps, stepCount]);
+
+  // Reset viewport scroll whenever currentIdx changes (browser focus can scroll overflow:hidden containers)
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (el) el.scrollTop = 0;
+  }, [currentIdx]);
+
+  // Prevent browser from scrolling the overflow:hidden viewport when inputs are focused
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const handleScroll = () => {
+      if (el.scrollTop !== 0) el.scrollTop = 0;
+    };
+    el.addEventListener("scroll", handleScroll, { passive: false });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Compute translateY offset: sum of heights of steps before currentIdx
   let offset = 0;

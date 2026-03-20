@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import {
   Baby, PawPrint, UserRound,
   Dog, Cat, Palette, Hammer, Car, House, Drama, Bone as DinoIcon,
-  BookOpen, Music, Puzzle, Dices, Microscope, Trophy, TreePine,
+  BookOpen, Music, Puzzle, ChessKnight, Microscope, Trophy, TreePine,
   Monitor, CookingPot, Flower2, Rocket, Calendar,
   Coffee, Leaf, Wine, UtensilsCrossed, Dumbbell, Mountain, Plane,
   Tv, Cpu, Sofa, Sparkles, PartyPopper, PenTool,
@@ -159,6 +159,9 @@ export function ChildGiftFlow() {
     setSubmitting(true);
     setError("");
     try {
+      if (!supabase) {
+        throw new Error("Supabase is not configured");
+      }
       const { error: dbError } = await supabase.from("gift_orders").insert({
         customer_first_name: data.customerFirstName,
         customer_email: data.customerEmail,
@@ -693,7 +696,7 @@ export function ChildGiftFlow() {
           "Books": <BookOpen className="h-4 w-4 shrink-0" />,
           "Music": <Music className="h-4 w-4 shrink-0" />,
           "Puzzles": <Puzzle className="h-4 w-4 shrink-0" />,
-          "Games": <Dices className="h-4 w-4 shrink-0" />,
+          "Games": <ChessKnight className="h-4 w-4 shrink-0" />,
           "Science & STEM": <Microscope className="h-4 w-4 shrink-0" />,
           "Sports & Active Play": <Trophy className="h-4 w-4 shrink-0" />,
           "Outdoor Play": <TreePine className="h-4 w-4 shrink-0" />,

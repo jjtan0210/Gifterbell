@@ -12,7 +12,7 @@ function normalize(input: string) {
 }
 
 function isEmail(value: string) {
-  return /\S+@\S+\.\S+/.test(value);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
 }
 
 export function isAnimationFrame(stepId: StepId) {
