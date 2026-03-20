@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import {
   Baby, PawPrint, UserRound,
   Dog, Palette, Hammer, Car, House, Drama, Bone as DinoIcon,
-  BookOpen, Music, Puzzle, Gamepad2, Microscope, Trophy, TreePine,
+  BookOpen, Music, Puzzle, ChessKnight, Microscope, Trophy, TreePine,
   Monitor, CookingPot, Flower2, Rocket, Calendar,
 } from "lucide-react";
 import { OccasionIllustration } from "./occasion-illustrations";
@@ -139,6 +139,9 @@ export function ChildGiftFlow() {
     setSubmitting(true);
     setError("");
     try {
+      if (!supabase) {
+        throw new Error("Supabase is not configured");
+      }
       const { error: dbError } = await supabase.from("gift_orders").insert({
         customer_first_name: data.customerFirstName,
         customer_email: data.customerEmail,
@@ -595,7 +598,7 @@ export function ChildGiftFlow() {
           "Books": <BookOpen className="h-4 w-4 shrink-0" />,
           "Music": <Music className="h-4 w-4 shrink-0" />,
           "Puzzles": <Puzzle className="h-4 w-4 shrink-0" />,
-          "Games": <Gamepad2 className="h-4 w-4 shrink-0" />,
+          "Games": <ChessKnight className="h-4 w-4 shrink-0" />,
           "Science & STEM": <Microscope className="h-4 w-4 shrink-0" />,
           "Sports & Active Play": <Trophy className="h-4 w-4 shrink-0" />,
           "Outdoor Play": <TreePine className="h-4 w-4 shrink-0" />,
@@ -910,7 +913,7 @@ export function ChildGiftFlow() {
         return (
           <StepLayout
             title="How should we sign the gift message?"
-            subtitle={`We'll include a standard ${toDisplayOccasion(data)} message for ${displayName}.`}
+            subtitle={data.occasion === "Just Because" || data.occasion === "Other" ? `We'll include a standard gift message for ${displayName}.` : `We'll include a standard ${toDisplayOccasion(data)} message for ${displayName}.`}
             plain
             className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
             titleClassName="text-[32px] leading-[1.12] tracking-[-0.02em] sm:text-[40px]"

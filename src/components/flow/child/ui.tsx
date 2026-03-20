@@ -396,6 +396,23 @@ export function FlowViewport({
     };
   }, [measureSteps, stepCount]);
 
+  // Reset viewport scroll whenever currentIdx changes (browser focus can scroll overflow:hidden containers)
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (el) el.scrollTop = 0;
+  }, [currentIdx]);
+
+  // Prevent browser from scrolling the overflow:hidden viewport when inputs are focused
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const handleScroll = () => {
+      if (el.scrollTop !== 0) el.scrollTop = 0;
+    };
+    el.addEventListener("scroll", handleScroll, { passive: false });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Compute translateY offset: sum of heights of steps before currentIdx
   let offset = 0;
   for (let i = 0; i < currentIdx && i < stepHeights.length; i++) {
