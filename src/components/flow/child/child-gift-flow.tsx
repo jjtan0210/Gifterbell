@@ -591,7 +591,32 @@ export function ChildGiftFlow() {
                 className="w-[100px] border-0 border-b-2 border-slate-300 bg-transparent px-2 py-3 text-center text-[20px] text-[#101b3d] outline-none placeholder:text-slate-400 focus:border-[#2aa89c]"
                 maxLength={4}
               />
-              <Calendar className="mb-3 h-6 w-6 shrink-0 text-slate-400" />
+              <div className="relative mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const picker = document.getElementById("anniversary-date-picker") as HTMLInputElement;
+                    if (picker) picker.showPicker();
+                  }}
+                  className="text-slate-400 transition hover:text-[#2aa89c]"
+                >
+                  <Calendar className="h-6 w-6" />
+                </button>
+                <input
+                  id="anniversary-date-picker"
+                  type="date"
+                  value={data.occasionDate.month && data.occasionDate.day && data.occasionDate.year
+                    ? `${data.occasionDate.year}-${data.occasionDate.month.padStart(2, "0")}-${data.occasionDate.day.padStart(2, "0")}`
+                    : ""}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const parts = e.target.value.split("-");
+                      update({ occasionDate: { year: parts[0], month: parts[1], day: parts[2] } });
+                    }
+                  }}
+                  className="invisible absolute left-0 top-0 h-0 w-0"
+                />
+              </div>
             </div>
             <div className="!mt-24 flex items-end justify-between">
               <button
@@ -1134,12 +1159,18 @@ export function ChildGiftFlow() {
               <span className="text-[15px] font-medium text-[#1a2748]">Send a custom message</span>
             </label>
             {data.useCustomMessage && (
-              <TextArea
-                rows={4}
-                placeholder="Write your custom gift message..."
-                value={data.customMessage}
-                onChange={(e) => update({ customMessage: e.target.value })}
-              />
+              <div>
+                <TextArea
+                  rows={4}
+                  maxLength={220}
+                  placeholder="Write your custom gift message..."
+                  value={data.customMessage}
+                  onChange={(e) => update({ customMessage: e.target.value })}
+                />
+                <p className="mt-1 text-right text-[12px] text-slate-400">
+                  {data.customMessage.length}/220
+                </p>
+              </div>
             )}
             {error && stepId === "giftMessage" && (
               <p className="text-sm font-medium text-rose-600">{error}</p>
@@ -1192,7 +1223,7 @@ export function ChildGiftFlow() {
       case "review":
         return (
           <StepLayout
-            title={`We\u2019ve scheduled ${displayName}\u2019s ${toDisplayOccasion(data)} gift!`}
+            title={data.occasion === "Just Because" || data.occasion === "Other" ? `We\u2019ve scheduled ${displayName}\u2019s gift!` : `We\u2019ve scheduled ${displayName}\u2019s ${toDisplayOccasion(data)} gift!`}
             plain
             className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
             titleClassName="text-[32px] leading-[1.12] tracking-[-0.02em] sm:text-[40px]"
@@ -1270,12 +1301,58 @@ export function ChildGiftFlow() {
       // ── Frame 20: Recurring ─────────────────────────────────────────
       case "recurring": {
         const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-        const getDefaultRecurringDate = () => {
-          // If birthday was provided, use that month/day
-          if (!data.occasionDateUnsure && data.occasionDate.month && data.occasionDate.day) {
-            return `${data.occasionDate.month.padStart(2, "0")}/${data.occasionDate.day.padStart(2, "0")}`;
+        const isOpenEndedOccasion = data.occasion === "Just Because" || data.occasion === "Other";
+        const threeDaysBefore = (month: number, day: number, year = 2026) => {
+          const d = new Date(year, month - 1, day);
+          d.setDate(d.getDate() - 3);
+          return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+        };
+        // Mother's Day: 2nd Sunday of May. Father's Day: 3rd Sunday of June.
+        const getNthSunday = (month: number, n: number, year = 2026) => {
+          const d = new Date(year, month - 1, 1);
+          let count = 0;
+          while (count < n) {
+            if (d.getDay() === 0) count++;
+            if (count < n) d.setDate(d.getDate() + 1);
           }
-          // Otherwise fall back to delivery date month/day
+          return { month, day: d.getDate() };
+        };
+        const hasOccasionDate = !data.occasionDateUnsure && data.occasionDate.month && data.occasionDate.day;
+        const getOccasionRecurringDate = (): { date: string; subtext: string } | null => {
+          const occasion = data.occasion;
+          if (occasion === "Birthday" && hasOccasionDate) {
+            const m = parseInt(data.occasionDate.month, 10);
+            const d = parseInt(data.occasionDate.day, 10);
+            const y = data.occasionDate.year ? parseInt(data.occasionDate.year, 10) : 2026;
+            return { date: threeDaysBefore(m, d, y), subtext: `~3 days before ${displayName}\u2019s birthday` };
+          }
+          if (occasion === "Anniversary" && hasOccasionDate) {
+            const m = parseInt(data.occasionDate.month, 10);
+            const d = parseInt(data.occasionDate.day, 10);
+            const y = data.occasionDate.year ? parseInt(data.occasionDate.year, 10) : 2026;
+            return { date: threeDaysBefore(m, d, y), subtext: "~3 days before anniversary" };
+          }
+          if (occasion === "Holiday") {
+            return { date: threeDaysBefore(12, 25), subtext: "~3 days before Christmas every year" };
+          }
+          if (occasion === "Mother's Day") {
+            const md = getNthSunday(5, 2);
+            return { date: threeDaysBefore(md.month, md.day), subtext: "~3 days before Mother\u2019s Day every year" };
+          }
+          if (occasion === "Father's Day") {
+            const fd = getNthSunday(6, 3);
+            return { date: threeDaysBefore(fd.month, fd.day), subtext: "~3 days before Father\u2019s Day every year" };
+          }
+          if (occasion === "Valentine's Day") {
+            return { date: threeDaysBefore(2, 14), subtext: "~3 days before Valentine\u2019s Day every year" };
+          }
+          return null;
+        };
+        const occasionRecurring = getOccasionRecurringDate();
+        const showOccasionSubtext = occasionRecurring && data.recurringDeliveryMonthDay === occasionRecurring.date;
+        const getDefaultRecurringDate = () => {
+          if (occasionRecurring) return occasionRecurring.date;
+          // Fall back to delivery date month/day
           if (data.arriveByDate && !data.arriveByDate.startsWith("partial")) {
             const parts = data.arriveByDate.split("-");
             if (parts.length === 3) return `${parts[1]}/${parts[2]}`;
@@ -1292,9 +1369,45 @@ export function ChildGiftFlow() {
           }
           return val;
         };
+        // For open-ended occasions: compute next delivery date based on frequency
+        const getNextDeliveryDate = (frequency: string): string => {
+          if (!data.arriveByDate || data.arriveByDate.startsWith("partial")) return "";
+          const base = new Date(data.arriveByDate + "T00:00:00");
+          switch (frequency) {
+            case "weekly":
+              base.setDate(base.getDate() + 7);
+              break;
+            case "every_2_weeks":
+              base.setDate(base.getDate() + 14);
+              break;
+            case "monthly":
+              base.setMonth(base.getMonth() + 1);
+              break;
+            case "annually":
+              base.setFullYear(base.getFullYear() + 1);
+              break;
+            default:
+              return "";
+          }
+          return base.toISOString().split("T")[0];
+        };
+        const formatFullDate = (val: string) => {
+          if (!val) return "";
+          const d = new Date(val + "T00:00:00");
+          return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+        };
+        const FREQUENCY_OPTIONS: Array<{ id: typeof data.recurringFrequency; label: string }> = [
+          { id: "weekly", label: "Weekly" },
+          { id: "every_2_weeks", label: "Every 2 weeks" },
+          { id: "monthly", label: "Monthly" },
+          { id: "annually", label: "Annually" },
+        ];
+        const recurringTitle = isOpenEndedOccasion
+          ? `Would you like us to keep sending gifts to ${displayName}?`
+          : `Would you like us to handle ${displayName}\u2019s ${toDisplayOccasion(data)} gift every year?`;
         return (
           <StepLayout
-            title={`Would you like us to handle ${displayName}\u2019s ${toDisplayOccasion(data)} gift every year?`}
+            title={recurringTitle}
             subtitle="We'll remember the date, choose the gift, and send it on time."
             plain
             className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
@@ -1306,7 +1419,7 @@ export function ChildGiftFlow() {
                 active={data.recurringEnabled === "yes"}
                 onClick={() => {
                   const updates: Partial<ChildFlowData> = { recurringEnabled: "yes" };
-                  if (!data.recurringDeliveryMonthDay) {
+                  if (!isOpenEndedOccasion && !data.recurringDeliveryMonthDay) {
                     updates.recurringDeliveryMonthDay = getDefaultRecurringDate();
                   }
                   update(updates);
@@ -1315,13 +1428,20 @@ export function ChildGiftFlow() {
               >
                 <div className="text-center">
                   <span className="text-[18px] font-bold text-[#0f1b3a]">Yes</span>
-                  <p className="mt-1 text-[15px] text-slate-500">Automatically send a gift each year</p>
+                  <p className="mt-1 text-[15px] text-slate-500">
+                    {isOpenEndedOccasion ? "Set up recurring gift deliveries" : "Automatically send a gift each year"}
+                  </p>
                 </div>
               </OptionCard>
 
-              {data.recurringEnabled === "yes" && (
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-[15px] font-medium text-[#1a2748]">Recurring delivery date:</span>
+              {data.recurringEnabled === "yes" && !isOpenEndedOccasion && (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="shrink-0">
+                    <span className="whitespace-nowrap text-[15px] font-medium text-[#1a2748]">Recurring delivery date:</span>
+                    {showOccasionSubtext && occasionRecurring && (
+                      <p className="text-[12px] text-slate-400 mt-0.5">{occasionRecurring.subtext}</p>
+                    )}
+                  </div>
                   <div className="relative">
                     <button
                       type="button"
@@ -1329,7 +1449,7 @@ export function ChildGiftFlow() {
                         const picker = document.getElementById("recurring-date-picker") as HTMLInputElement;
                         if (picker) picker.showPicker();
                       }}
-                      className="flex items-center gap-2 rounded-[12px] border border-[#2aa89c] bg-white px-4 py-2 text-[14px] font-medium text-[#101b3d] hover:bg-slate-50 transition cursor-pointer"
+                      className="flex items-center gap-2 whitespace-nowrap rounded-[12px] border border-[#2aa89c] bg-white px-6 py-2 text-[14px] font-medium text-[#101b3d] hover:bg-slate-50 transition cursor-pointer"
                     >
                       <span>{formatRecurringDate(data.recurringDeliveryMonthDay) || "Select date"}</span>
                       <Calendar className="h-4 w-4 text-slate-400" />
@@ -1351,6 +1471,76 @@ export function ChildGiftFlow() {
                       className="invisible absolute left-0 top-0 h-0 w-0"
                     />
                   </div>
+                </div>
+              )}
+
+              {data.recurringEnabled === "yes" && isOpenEndedOccasion && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-[15px] font-medium text-[#1a2748]">How often?</p>
+                  <div className="space-y-2">
+                    {FREQUENCY_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-[#2aa89c]"
+                        style={data.recurringFrequency === opt.id ? { borderColor: "#2aa89c", backgroundColor: "#f0fdf9" } : {}}
+                      >
+                        <span
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition"
+                          style={data.recurringFrequency === opt.id ? { borderColor: "#2aa89c" } : { borderColor: "#cbd5e1" }}
+                        >
+                          {data.recurringFrequency === opt.id && (
+                            <span className="block h-2.5 w-2.5 rounded-full bg-[#2aa89c]" />
+                          )}
+                        </span>
+                        <span className="text-[15px] font-medium text-[#0f1b3a]">{opt.label}</span>
+                        <input
+                          type="radio"
+                          name="recurringFrequency"
+                          value={opt.id}
+                          checked={data.recurringFrequency === opt.id}
+                          onChange={() => {
+                            const nextDate = getNextDeliveryDate(opt.id);
+                            update({
+                              recurringFrequency: opt.id,
+                              recurringDeliveryMonthDay: nextDate,
+                            });
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  {data.recurringFrequency && (
+                    <div className="flex items-center justify-between gap-3 mt-4">
+                      <span className="whitespace-nowrap text-[15px] font-medium text-[#1a2748]">Next delivery date:</span>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const picker = document.getElementById("recurring-date-picker") as HTMLInputElement;
+                            if (picker) picker.showPicker();
+                          }}
+                          className="flex items-center gap-2 whitespace-nowrap rounded-[12px] border border-[#2aa89c] bg-white px-6 py-2 text-[14px] font-medium text-[#101b3d] hover:bg-slate-50 transition cursor-pointer"
+                        >
+                          <span>{formatFullDate(data.recurringDeliveryMonthDay) || "Select date"}</span>
+                          <Calendar className="h-4 w-4 text-slate-400" />
+                        </button>
+                        <input
+                          id="recurring-date-picker"
+                          type="date"
+                          value={data.recurringDeliveryMonthDay}
+                          min={getMinDeliveryDate()}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              update({ recurringDeliveryMonthDay: e.target.value });
+                            }
+                          }}
+                          className="invisible absolute left-0 top-0 h-0 w-0"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

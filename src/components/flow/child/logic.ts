@@ -26,13 +26,13 @@ export function hasCompleteOccasionDate(data: ChildFlowData) {
 }
 
 /**
- * Get the minimum selectable date (7 business days from today).
+ * Get the minimum selectable date (5 business days from today).
  * Returns an ISO date string (YYYY-MM-DD).
  */
 export function getMinDeliveryDate(): string {
   const date = new Date();
   let businessDays = 0;
-  while (businessDays < 7) {
+  while (businessDays < 5) {
     date.setDate(date.getDate() + 1);
     const dayOfWeek = date.getDay();
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
@@ -78,7 +78,7 @@ export function getVisibleSteps(data: ChildFlowData): StepId[] {
     // recurring skipped for one-time occasions and pet flow
     if (step === "recurring") {
       if (isPet) return false;
-      const oneTimeOccasions = ["Baby Shower / Newborn", "Wedding", "Graduation", "Housewarming", "Just Because", "Other"];
+      const oneTimeOccasions = ["Baby Shower / Newborn", "Wedding", "Graduation", "Housewarming"];
       if (oneTimeOccasions.includes(data.occasion)) return false;
     }
     // ageRange: always show for adults and pets, conditional for children
@@ -159,7 +159,8 @@ export function validateStep(step: StepId, data: ChildFlowData) {
     }
 
     case "deliveryDate":
-      return data.arriveByDate.length > 0 && !data.arriveByDate.startsWith("partial");
+      if (data.arriveByDate.length === 0 || data.arriveByDate.startsWith("partial")) return false;
+      return data.arriveByDate >= getMinDeliveryDate();
 
     case "giftMessage":
       return data.giftSignature.trim().length > 0;
@@ -170,8 +171,16 @@ export function validateStep(step: StepId, data: ChildFlowData) {
     case "review":
       return true;
 
-    case "recurring":
-      return data.recurringEnabled !== "";
+    case "recurring": {
+      if (data.recurringEnabled === "") return false;
+      if (data.recurringEnabled === "yes") {
+        const isOpenEnded = data.occasion === "Just Because" || data.occasion === "Other";
+        if (isOpenEnded) {
+          return data.recurringFrequency !== "" && data.recurringDeliveryMonthDay !== "";
+        }
+      }
+      return true;
+    }
 
     case "checkout":
       return (
