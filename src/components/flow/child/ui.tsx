@@ -336,7 +336,7 @@ export const FlowStep = forwardRef<HTMLDivElement, { active: boolean; children: 
         data-active={active}
         aria-hidden={!active}
         tabIndex={active ? undefined : -1}
-        style={viewportHeight ? { minHeight: viewportHeight } : undefined}
+        style={viewportHeight ? { [active ? 'height' : 'minHeight']: viewportHeight } : undefined}
       >
         <div className="w-full py-4 sm:py-6">{children}</div>
       </div>
@@ -358,6 +358,13 @@ export function FlowViewport({
   const [stepHeights, setStepHeights] = useState<number[]>([]);
   const [viewportHeight, setViewportHeight] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Reset scroll position on mount (Next.js scroll restoration can set scrollTop on overflow:hidden elements)
+  useEffect(() => {
+    if (viewportRef.current) {
+      viewportRef.current.scrollTop = 0;
+    }
+  }, []);
 
   // Measure viewport height
   useEffect(() => {

@@ -1,7 +1,12 @@
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type RecipientType = "child" | "adult" | "pet";
-export type GiftStyleOption = "boy_leaning" | "girl_leaning" | "neutral" | "open";
+export type GiftStyleOption = "boy_leaning" | "girl_leaning" | "neutral" | "open" | "men" | "women";
 export type GiftStyle = GiftStyleOption[];
+export type AdultGiftVibeOption = "practical" | "thoughtful" | "playful" | "subtle_neutral" | "bright_vibrant" | "open_anything";
+export type AdultGiftVibe = AdultGiftVibeOption[];
+export type PetType = "dog" | "cat" | "";
+export type PetGiftStyleOption = "toys" | "treats" | "comfort" | "practical" | "accessories" | "open";
+export type PetGiftStyle = PetGiftStyleOption[];
 export type BudgetOption = "25_50" | "50_100" | "100_150" | "150_250" | "above_250" | "";
 export type GiftWrappedOption = "yes" | "no" | "";
 export type RecurringOption = "yes" | "no" | "";
@@ -10,14 +15,17 @@ export type StepId =
   | "customerInfo"
   | "greeting"
   | "recipientType"
+  | "petType"
   | "recipientName"
   | "occasion"
   | "thanksAnim"
   | "birthdayDate"
   | "anniversaryDate"
   | "ageRange"
+  | "petSize"
   | "interests"
   | "giftStyle"
+  | "adultGiftVibe"
   | "avoid"
   | "coveredAnim"
   | "budget"
@@ -60,6 +68,12 @@ export type ChildFlowData = {
   interestsOther: string;
   // Frame 11: Gift style
   giftStyle: GiftStyle;
+  // Frame 11b: Adult gift vibe (adult flow only)
+  adultGiftVibe: AdultGiftVibe;
+  // Pet flow fields
+  petType: PetType;
+  petSize: string;
+  petGiftStyle: PetGiftStyle;
   // Frame 12: Avoid
   avoidances: string[];
   otherAvoidance: string;
@@ -101,6 +115,10 @@ export const INITIAL_CHILD_FLOW: ChildFlowData = {
   interests: [],
   interestsOther: "",
   giftStyle: [],
+  adultGiftVibe: [],
+  petType: "",
+  petSize: "",
+  petGiftStyle: [],
   avoidances: [],
   otherAvoidance: "",
   budget: "",
@@ -174,7 +192,59 @@ export const INTEREST_OPTIONS = [
   "Other specific interests",
 ];
 
+export const ADULT_AGE_RANGES = [
+  "18–24",
+  "25–34",
+  "35–44",
+  "45–54",
+  "55–64",
+  "65+",
+  "Prefer not to say",
+];
+
+export const ADULT_INTEREST_OPTIONS = [
+  "Cooking",
+  "Coffee",
+  "Tea",
+  "Wine & cocktails",
+  "Food & Drink",
+  "Fitness",
+  "Outdoors",
+  "Travel",
+  "Reading",
+  "Music",
+  "Movies & TV",
+  "Tech",
+  "Home",
+  "Gardening",
+  "Self-care & Wellness",
+  "Hosting & Entertaining",
+  "Art & design",
+  "Other specific interests",
+];
+
 export const AVOIDANCE_OPTIONS = ["Messy toys", "Loud toys"];
+
+export const PET_OCCASIONS = ["Birthday", "Holiday", "Just Because"];
+
+export const PET_AGE_RANGES = [
+  "Puppy / kitten",
+  "Young adult",
+  "Adult",
+  "Senior",
+  "Not sure",
+];
+
+export const PET_SIZE_OPTIONS = ["Small", "Medium", "Large"];
+
+export const PET_GIFT_STYLE_OPTIONS: Array<{ id: PetGiftStyleOption; label: string }> = [
+  { id: "toys", label: "Toys" },
+  { id: "treats", label: "Treats" },
+  { id: "comfort", label: "Comfort items" },
+  { id: "practical", label: "Practical items" },
+  { id: "accessories", label: "Accessories" },
+  { id: "open", label: "Open to anything" },
+];
 
 export const BUDGET_OPTIONS: Array<{ id: Exclude<BudgetOption, "">; label: string }> = [
   { id: "25_50", label: "$25\u2013$50" },
@@ -197,14 +267,17 @@ export const STEP_ORDER: StepId[] = [
   "customerInfo",
   "greeting",
   "recipientType",
+  "petType",
   "recipientName",
   "occasion",
   "thanksAnim",
   "birthdayDate",
   "anniversaryDate",
   "ageRange",
+  "petSize",
   "interests",
   "giftStyle",
+  "adultGiftVibe",
   "avoid",
   "coveredAnim",
   "budget",
