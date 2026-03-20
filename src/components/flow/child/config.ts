@@ -10,6 +10,7 @@ export type PetGiftStyle = PetGiftStyleOption[];
 export type BudgetOption = "25_50" | "50_100" | "100_150" | "150_250" | "above_250" | "";
 export type GiftWrappedOption = "yes" | "no" | "";
 export type RecurringOption = "yes" | "no" | "";
+export type RecurringFrequencyOption = "weekly" | "every_2_weeks" | "monthly" | "annually" | "";
 
 export type StepId =
   | "customerInfo"
@@ -90,6 +91,7 @@ export type ChildFlowData = {
   giftWrapped: GiftWrappedOption;
   // Frame 20: Recurring
   recurringEnabled: RecurringOption;
+  recurringFrequency: RecurringFrequencyOption;
   recurringDeliveryMonthDay: string;
   // Frame 21: Checkout / shipping address
   recipientLastName: string;
@@ -129,6 +131,7 @@ export const INITIAL_CHILD_FLOW: ChildFlowData = {
   customMessage: "",
   giftWrapped: "",
   recurringEnabled: "",
+  recurringFrequency: "",
   recurringDeliveryMonthDay: "",
   recipientLastName: "",
   street: "",
