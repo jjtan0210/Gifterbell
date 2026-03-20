@@ -46,22 +46,44 @@ export function getMinDeliveryDate(): string {
 
 /** Returns only the steps that should be visible given current user selections. */
 export function getVisibleSteps(data: ChildFlowData): StepId[] {
+  const isAdult = data.recipientType === "adult";
+  const isPet = data.recipientType === "pet";
   return STEP_ORDER.filter((step) => {
+    // petType only visible for pet flow
+    if (step === "petType") {
+      return isPet;
+    }
+    // petSize only visible for pet flow
+    if (step === "petSize") {
+      return isPet;
+    }
+    // adultGiftVibe only visible for adult flow
+    if (step === "adultGiftVibe") {
+      return isAdult;
+    }
+    // interests skipped for pet flow
+    if (step === "interests") {
+      return !isPet;
+    }
+    // giftStyle skipped for pet flow (pets use petGiftStyle in the giftStyle step position — we reuse giftStyle step)
+    // Actually, we reuse the giftStyle step but with pet-specific options, so keep it visible
     // birthdayDate only visible when occasion is Birthday
     if (step === "birthdayDate") {
-      return data.occasion === "Birthday";
+      return data.occasion === "Birthday" && !isPet;
     }
     // anniversaryDate only visible when occasion is Anniversary
     if (step === "anniversaryDate") {
-      return data.occasion === "Anniversary";
+      return data.occasion === "Anniversary" && !isPet;
     }
-    // recurring skipped for one-time occasions
+    // recurring skipped for one-time occasions and pet flow
     if (step === "recurring") {
+      if (isPet) return false;
       const oneTimeOccasions = ["Baby Shower / Newborn", "Wedding", "Graduation", "Housewarming", "Just Because", "Other"];
       if (oneTimeOccasions.includes(data.occasion)) return false;
     }
-    // ageRange skipped when birthday is fully provided (we can derive age) or unborn child
+    // ageRange: always show for adults and pets, conditional for children
     if (step === "ageRange") {
+      if (isAdult || isPet) return true;
       if (data.isUnbornChild) return false;
       if (data.occasion === "Birthday" && hasCompleteOccasionDate(data)) {
         return false;
@@ -86,9 +108,13 @@ export function validateStep(step: StepId, data: ChildFlowData) {
       return data.customerFirstName.trim().length > 0 && isEmail(data.customerEmail);
 
     case "recipientType":
-      return data.recipientType === "child"; // only child path supported
+      return data.recipientType === "child" || data.recipientType === "adult" || data.recipientType === "pet";
+
+    case "petType":
+      return data.petType === "dog" || data.petType === "cat";
 
     case "recipientName":
+      if (data.recipientType === "adult" || data.recipientType === "pet") return data.firstName.trim().length > 0;
       return data.isUnbornChild || data.firstName.trim().length > 0;
 
     case "occasion":
@@ -110,8 +136,15 @@ export function validateStep(step: StepId, data: ChildFlowData) {
       }
       return true;
 
+    case "petSize":
+      return data.petSize.trim().length > 0;
+
     case "giftStyle":
+      if (data.recipientType === "pet") return data.petGiftStyle.length > 0;
       return data.giftStyle.length > 0;
+
+    case "adultGiftVibe":
+      return data.adultGiftVibe.length > 0;
 
     case "avoid":
       return true; // optional

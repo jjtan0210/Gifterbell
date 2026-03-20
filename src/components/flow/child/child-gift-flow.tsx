@@ -4,19 +4,29 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Baby, PawPrint, UserRound,
-  Dog, Palette, Hammer, Car, House, Drama, Bone as DinoIcon,
+  Dog, Cat, Palette, Hammer, Car, House, Drama, Bone as DinoIcon,
   BookOpen, Music, Puzzle, ChessKnight, Microscope, Trophy, TreePine,
   Monitor, CookingPot, Flower2, Rocket, Calendar,
+  Coffee, Leaf, Wine, UtensilsCrossed, Dumbbell, Mountain, Plane,
+  Tv, Cpu, Sofa, Sparkles, PartyPopper, PenTool,
 } from "lucide-react";
 import { OccasionIllustration } from "./occasion-illustrations";
 import {
   AGE_RANGES,
+  ADULT_AGE_RANGES,
+  ADULT_INTEREST_OPTIONS,
   BUDGET_OPTIONS,
   ChildFlowData,
   INITIAL_CHILD_FLOW,
   INTEREST_OPTIONS,
   OCCASIONS,
+  PET_OCCASIONS,
+  PET_AGE_RANGES,
+  PET_SIZE_OPTIONS,
+  PET_GIFT_STYLE_OPTIONS,
   StepId,
+  type AdultGiftVibeOption,
+  type PetGiftStyleOption,
 } from "./config";
 import {
   getEstimatedDeliveryDate,
@@ -86,6 +96,10 @@ export function ChildGiftFlow() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [error, setError] = useState("");
 
+  // Scroll to top on mount to avoid scroll position carryover from homepage
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -98,7 +112,13 @@ export function ChildGiftFlow() {
   const progressCurrent = Math.max(1, currentActionableIdx + 1);
   const progressTotal = actionableSteps.length;
 
-  const displayName = data.isUnbornChild ? (data.firstName || "the baby") : (data.firstName || "this child");
+  const isAdult = data.recipientType === "adult";
+  const isPet = data.recipientType === "pet";
+  const displayName = isPet
+    ? (data.firstName || "your pet")
+    : isAdult
+    ? (data.firstName || "this person")
+    : data.isUnbornChild ? (data.firstName || "the baby") : (data.firstName || "this child");
 
   function update(patch: Partial<ChildFlowData>) {
     setData((prev) => ({ ...prev, ...patch }));
@@ -157,6 +177,10 @@ export function ChildGiftFlow() {
         interests: data.interests,
         interests_other: data.interestsOther,
         gift_style: data.giftStyle,
+        adult_gift_vibe: data.adultGiftVibe,
+        pet_type: data.petType,
+        pet_size: data.petSize,
+        pet_gift_style: data.petGiftStyle,
         avoidances: data.avoidances,
         other_avoidance: data.otherAvoidance,
         budget: data.budget,
@@ -291,15 +315,50 @@ export function ChildGiftFlow() {
                 </button>
               ))}
             </div>
-            {data.recipientType !== "child" && (
-              <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Adult and Pet paths are coming soon. This prototype supports the Child flow only.
-              </p>
+            <div className="!mt-8 flex justify-center">
+              <PrimaryButton
+                onClick={goNext}
+                disabled={!validateStep("recipientType", data)}
+                className="!w-auto rounded-[16px] px-12 py-4 text-[17px]"
+              >
+                Continue
+              </PrimaryButton>
+            </div>
+          </StepLayout>
+        );
+
+      // ── Pet Type ─────────────────────────────────────────────────────
+      case "petType":
+        return (
+          <StepLayout
+            title="What kind of pet is this for?"
+            plain
+            className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
+            titleClassName="text-[36px] leading-[1.08] tracking-[-0.02em] sm:text-[46px]"
+            contentClassName="mt-16 space-y-5"
+          >
+            <div className="mx-auto grid max-w-[320px] gap-3">
+              {(["dog", "cat"] as const).map((type) => (
+                <OptionCard
+                  key={type}
+                  active={data.petType === type}
+                  onClick={() => update({ petType: type })}
+                  className="!rounded-full !py-4 !text-[17px] !text-center"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {type === "dog" ? <Dog className="h-5 w-5" /> : <Cat className="h-5 w-5" />}
+                    {type === "dog" ? "Dog" : "Cat"}
+                  </span>
+                </OptionCard>
+              ))}
+            </div>
+            {error && stepId === "petType" && (
+              <p className="text-sm font-medium text-rose-600">{error}</p>
             )}
             <div className="!mt-8 flex justify-center">
               <PrimaryButton
                 onClick={goNext}
-                disabled={data.recipientType !== "child"}
+                disabled={!validateStep("petType", data)}
                 className="!w-auto rounded-[16px] px-12 py-4 text-[17px]"
               >
                 Continue
@@ -312,7 +371,7 @@ export function ChildGiftFlow() {
       case "recipientName":
         return (
           <StepLayout
-            title="What's the child's name?"
+            title={isPet ? "What is the pet's name?" : isAdult ? "What is their name?" : "What's the child's name?"}
             plain
             className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
             titleClassName="text-[36px] leading-[1.08] tracking-[-0.02em] sm:text-[46px]"
@@ -327,22 +386,26 @@ export function ChildGiftFlow() {
                 autoFocus
                 className="flex-1 rounded-t-lg border-0 border-b-2 border-slate-300 bg-slate-100 px-4 py-4 text-[20px] text-[#101b3d] outline-none placeholder:text-slate-400 focus:border-[#2aa89c] focus:bg-slate-50"
               />
-              <input
-                placeholder="Last Name"
-                value={data.recipientLastName}
-                onChange={(e) => update({ recipientLastName: e.target.value })}
-                className="flex-1 rounded-t-lg border-0 border-b-2 border-slate-300 bg-slate-100 px-4 py-4 text-[20px] text-[#101b3d] outline-none placeholder:text-slate-400 focus:border-[#2aa89c] focus:bg-slate-50"
-              />
+              {!isPet && (
+                <input
+                  placeholder="Last Name"
+                  value={data.recipientLastName}
+                  onChange={(e) => update({ recipientLastName: e.target.value })}
+                  className="flex-1 rounded-t-lg border-0 border-b-2 border-slate-300 bg-slate-100 px-4 py-4 text-[20px] text-[#101b3d] outline-none placeholder:text-slate-400 focus:border-[#2aa89c] focus:bg-slate-50"
+                />
+              )}
             </div>
-            <label className="!mt-6 flex items-center justify-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={data.isUnbornChild}
-                onChange={(e) => update({ isUnbornChild: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-300 text-[#2aa89c] focus:ring-[#2aa89c]"
-              />
-              <span className="text-[15px] text-slate-600"><em>Name unknown</em> - this is for an unborn child</span>
-            </label>
+            {!isAdult && !isPet && (
+              <label className="!mt-6 flex items-center justify-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={data.isUnbornChild}
+                  onChange={(e) => update({ isUnbornChild: e.target.checked })}
+                  className="h-5 w-5 rounded border-slate-300 text-[#2aa89c] focus:ring-[#2aa89c]"
+                />
+                <span className="text-[15px] text-slate-600"><em>Name unknown</em> - this is for an unborn child</span>
+              </label>
+            )}
             {error && stepId === "recipientName" && (
               <p className="text-sm font-medium text-rose-600">{error}</p>
             )}
@@ -369,7 +432,7 @@ export function ChildGiftFlow() {
             contentClassName="mt-3 space-y-3"
           >
             <div className="grid grid-cols-3 gap-2">
-              {OCCASIONS.map((occasion) => (
+              {(isPet ? PET_OCCASIONS : OCCASIONS).map((occasion) => (
                 <button
                   key={occasion}
                   type="button"
@@ -502,56 +565,53 @@ export function ChildGiftFlow() {
             plain
             className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
             titleClassName="text-[32px] leading-[1.12] tracking-[-0.02em] sm:text-[40px]"
-            contentClassName="mt-8 space-y-5"
+            contentClassName="mt-32 space-y-5"
           >
-            <div className="flex items-center gap-3">
-              <Field label="Month">
-                <Input
-                  placeholder="MM"
-                  value={data.occasionDate.month}
-                  onChange={(e) => update({ occasionDate: { ...data.occasionDate, month: e.target.value } })}
-                  className="w-[80px] rounded-[16px] border-2 border-[#2aa89c] bg-white px-3 py-3 !text-[14px] text-center ring-2 ring-[#2aa89c]/20"
-                  maxLength={2}
-                />
-              </Field>
-              <span className="mt-6 text-2xl text-slate-400">/</span>
-              <Field label="Day">
-                <Input
-                  placeholder="DD"
-                  value={data.occasionDate.day}
-                  onChange={(e) => update({ occasionDate: { ...data.occasionDate, day: e.target.value } })}
-                  className="w-[80px] rounded-[16px] border-2 border-[#2aa89c] bg-white px-3 py-3 !text-[14px] text-center ring-2 ring-[#2aa89c]/20"
-                  maxLength={2}
-                />
-              </Field>
-              <span className="mt-6 text-2xl text-slate-400">/</span>
-              <Field label="Year">
-                <Input
-                  placeholder="YYYY"
-                  value={data.occasionDate.year}
-                  onChange={(e) => update({ occasionDate: { ...data.occasionDate, year: e.target.value } })}
-                  className="w-[100px] rounded-[16px] border-2 border-[#2aa89c] bg-white px-3 py-3 !text-[14px] text-center ring-2 ring-[#2aa89c]/20"
-                  maxLength={4}
-                />
-              </Field>
+            <div className="flex items-end justify-center gap-3">
+              <input
+                placeholder="MM"
+                value={data.occasionDate.month}
+                onChange={(e) => update({ occasionDate: { ...data.occasionDate, month: e.target.value } })}
+                className="w-[80px] border-0 border-b-2 border-slate-300 bg-transparent px-2 py-3 text-center text-[20px] text-[#101b3d] outline-none placeholder:text-slate-400 focus:border-[#2aa89c]"
+                maxLength={2}
+              />
+              <span className="pb-3 text-2xl text-slate-400">/</span>
+              <input
+                placeholder="DD"
+                value={data.occasionDate.day}
+                onChange={(e) => update({ occasionDate: { ...data.occasionDate, day: e.target.value } })}
+                className="w-[80px] border-0 border-b-2 border-slate-300 bg-transparent px-2 py-3 text-center text-[20px] text-[#101b3d] outline-none placeholder:text-slate-400 focus:border-[#2aa89c]"
+                maxLength={2}
+              />
+              <span className="pb-3 text-2xl text-slate-400">/</span>
+              <input
+                placeholder="YYYY"
+                value={data.occasionDate.year}
+                onChange={(e) => update({ occasionDate: { ...data.occasionDate, year: e.target.value } })}
+                className="w-[100px] border-0 border-b-2 border-slate-300 bg-transparent px-2 py-3 text-center text-[20px] text-[#101b3d] outline-none placeholder:text-slate-400 focus:border-[#2aa89c]"
+                maxLength={4}
+              />
+              <Calendar className="mb-3 h-6 w-6 shrink-0 text-slate-400" />
             </div>
-            <div className="flex gap-3">
-              <PrimaryButton onClick={goNext} inline className="flex-1 rounded-[16px] py-4 text-[17px]">
-                Continue
-              </PrimaryButton>
+            <div className="!mt-24 flex items-end justify-between">
               <button
                 type="button"
                 onClick={goNext}
-                className="rounded-[16px] border-2 border-slate-200 bg-white px-6 py-4 text-[15px] font-medium text-slate-600 transition hover:border-slate-300"
+                className="inline-flex items-center justify-center rounded-full bg-[#9ca3af] px-8 py-4 text-[17px] font-bold text-white transition hover:bg-[#6b7280]"
               >
-                Skip
+                <span>Skip</span>
+                <span className="text-[20px] leading-none">&rarr;</span>
               </button>
+              <PrimaryButton onClick={goNext} inline className="!w-auto rounded-[16px] px-8 py-4 text-[17px]">
+                Continue
+              </PrimaryButton>
             </div>
           </StepLayout>
         );
 
       // ── Frame 8: Age Range ──────────────────────────────────────────
-      case "ageRange":
+      case "ageRange": {
+        const ageOptions = isPet ? PET_AGE_RANGES : isAdult ? ADULT_AGE_RANGES : AGE_RANGES;
         return (
           <StepLayout
             title={`Approximately how old is ${displayName}?`}
@@ -560,12 +620,12 @@ export function ChildGiftFlow() {
             titleClassName="text-[32px] leading-[1.12] tracking-[-0.02em] sm:text-[40px]"
             contentClassName="mt-4 space-y-3"
           >
-            <div className="grid grid-cols-2 gap-2">
-              {AGE_RANGES.map((age) => {
+            <div className={`grid gap-2 ${isPet ? "mx-auto max-w-[320px] grid-cols-1" : isAdult ? "mx-auto max-w-[360px] grid-cols-2" : "grid-cols-2"}`}>
+              {ageOptions.map((age) => {
                 const [category, range] = age.includes(":") ? age.split(":") : [age, ""];
                 return (
-                  <OptionCard key={age} active={data.ageRange === age} onClick={() => update({ ageRange: age })} className="!rounded-full !px-3.5 !py-3.5 !text-[15px]">
-                    <span className="font-bold">{category}</span>{range ? `:${range}` : ""}
+                  <OptionCard key={age} active={data.ageRange === age} onClick={() => update({ ageRange: age })} className={isAdult || isPet ? "!rounded-full !px-3.5 !py-3.5 !text-[17px] !font-normal !text-center" : "!rounded-full !px-3.5 !py-3.5 !text-[15px]"}>
+                    {isAdult || isPet ? <span>{category}</span> : <span className="font-bold">{category}</span>}{range ? `:${range}` : ""}
                   </OptionCard>
                 );
               })}
@@ -584,10 +644,48 @@ export function ChildGiftFlow() {
             </div>
           </StepLayout>
         );
+      }
+
+      // ── Pet Size ────────────────────────────────────────────────────
+      case "petSize":
+        return (
+          <StepLayout
+            title={`What size ${data.petType === "dog" ? "dog" : "cat"} is ${displayName}?`}
+            plain
+            className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
+            titleClassName="text-[32px] leading-[1.12] tracking-[-0.02em] sm:text-[40px]"
+            contentClassName="mt-40 space-y-3"
+          >
+            <div className="mx-auto grid max-w-[320px] grid-cols-1 gap-2">
+              {PET_SIZE_OPTIONS.map((size) => (
+                <OptionCard
+                  key={size}
+                  active={data.petSize === size}
+                  onClick={() => update({ petSize: size })}
+                  className="!rounded-full !py-3.5 !text-[17px] !font-normal !text-center"
+                >
+                  {size}
+                </OptionCard>
+              ))}
+            </div>
+            {error && stepId === "petSize" && (
+              <p className="text-sm font-medium text-rose-600">{error}</p>
+            )}
+            <div className="!mt-4 flex justify-center">
+              <PrimaryButton
+                onClick={goNext}
+                disabled={!validateStep("petSize", data)}
+                className="!w-auto rounded-[16px] px-12 py-3.5 text-[17px]"
+              >
+                Continue
+              </PrimaryButton>
+            </div>
+          </StepLayout>
+        );
 
       // ── Frame 10: Interests ─────────────────────────────────────────
       case "interests": {
-        const interestIcons: Record<string, React.ReactNode> = {
+        const childInterestIcons: Record<string, React.ReactNode> = {
           "Animals": <Dog className="h-4 w-4 shrink-0" />,
           "Arts & Crafts": <Palette className="h-4 w-4 shrink-0" />,
           "Building & Construction": <Hammer className="h-4 w-4 shrink-0" />,
@@ -607,7 +705,28 @@ export function ChildGiftFlow() {
           "Nature & Gardening": <Flower2 className="h-4 w-4 shrink-0" />,
           "Space": <Rocket className="h-4 w-4 shrink-0" />,
         };
-        const mainInterests = INTEREST_OPTIONS.filter((i) => i !== "Other specific interests");
+        const adultInterestIcons: Record<string, React.ReactNode> = {
+          "Cooking": <CookingPot className="h-4 w-4 shrink-0" />,
+          "Coffee": <Coffee className="h-4 w-4 shrink-0" />,
+          "Tea": <Leaf className="h-4 w-4 shrink-0" />,
+          "Wine & cocktails": <Wine className="h-4 w-4 shrink-0" />,
+          "Food & Drink": <UtensilsCrossed className="h-4 w-4 shrink-0" />,
+          "Fitness": <Dumbbell className="h-4 w-4 shrink-0" />,
+          "Outdoors": <Mountain className="h-4 w-4 shrink-0" />,
+          "Travel": <Plane className="h-4 w-4 shrink-0" />,
+          "Reading": <BookOpen className="h-4 w-4 shrink-0" />,
+          "Music": <Music className="h-4 w-4 shrink-0" />,
+          "Movies & TV": <Tv className="h-4 w-4 shrink-0" />,
+          "Tech": <Cpu className="h-4 w-4 shrink-0" />,
+          "Home": <Sofa className="h-4 w-4 shrink-0" />,
+          "Gardening": <Flower2 className="h-4 w-4 shrink-0" />,
+          "Self-care & Wellness": <Sparkles className="h-4 w-4 shrink-0" />,
+          "Hosting & Entertaining": <PartyPopper className="h-4 w-4 shrink-0" />,
+          "Art & design": <PenTool className="h-4 w-4 shrink-0" />,
+        };
+        const interestIcons = isAdult ? adultInterestIcons : childInterestIcons;
+        const interestOptions = isAdult ? ADULT_INTEREST_OPTIONS : INTEREST_OPTIONS;
+        const mainInterests = interestOptions.filter((i) => i !== "Other specific interests");
         return (
           <StepLayout
             title={`What is ${displayName} into?`}
@@ -674,7 +793,50 @@ export function ChildGiftFlow() {
       }
 
       // ── Frame 11: Gift Style ────────────────────────────────────────
-      case "giftStyle":
+      case "giftStyle": {
+        if (isPet) {
+          return (
+            <StepLayout
+              title={`What type of gifts should we lean toward for ${displayName}?`}
+              subtitle="Select all that apply"
+              plain
+              className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
+              titleClassName="text-[32px] leading-[1.12] tracking-[-0.02em] sm:text-[40px]"
+              contentClassName="mt-32 space-y-3"
+            >
+              <div className="mx-auto grid max-w-[360px] grid-cols-2 gap-2">
+                {PET_GIFT_STYLE_OPTIONS.map((item) => (
+                  <OptionCard
+                    key={item.id}
+                    active={data.petGiftStyle.includes(item.id)}
+                    onClick={() => update({ petGiftStyle: data.petGiftStyle.includes(item.id) ? data.petGiftStyle.filter((s: PetGiftStyleOption) => s !== item.id) : [...data.petGiftStyle, item.id] })}
+                    className="!rounded-full !py-3.5 !text-[15px] !text-center"
+                  >
+                    {item.label}
+                  </OptionCard>
+                ))}
+              </div>
+              {error && stepId === "giftStyle" && (
+                <p className="text-sm font-medium text-rose-600">{error}</p>
+              )}
+              <PrimaryButton onClick={goNext} disabled={!validateStep("giftStyle", data)}>
+                Continue
+              </PrimaryButton>
+            </StepLayout>
+          );
+        }
+        const giftStyleOptions = isAdult
+          ? ([
+              { id: "men" as const, label: "Gifts for men" },
+              { id: "women" as const, label: "Gifts for women" },
+              { id: "open" as const, label: "Open to anything that fits" },
+            ])
+          : ([
+              { id: "boy_leaning" as const, label: "Boy-oriented items" },
+              { id: "girl_leaning" as const, label: "Girl-oriented items" },
+              { id: "neutral" as const, label: "Gender-neutral items" },
+              { id: "open" as const, label: "Open to anything that fits" },
+            ]);
         return (
           <StepLayout
             title={`What type of gifts should we lean toward for ${displayName}?`}
@@ -685,12 +847,7 @@ export function ChildGiftFlow() {
             contentClassName="mt-6 space-y-3"
           >
             <div className="mx-auto grid max-w-[320px] gap-2">
-              {([
-                { id: "boy_leaning", label: "Boy-oriented items" },
-                { id: "girl_leaning", label: "Girl-oriented items" },
-                { id: "neutral", label: "Gender-neutral items" },
-                { id: "open", label: "Open to anything that fits" },
-              ] as const).map((item) => (
+              {giftStyleOptions.map((item) => (
                 <OptionCard
                   key={item.id}
                   active={data.giftStyle.includes(item.id)}
@@ -709,6 +866,46 @@ export function ChildGiftFlow() {
             </PrimaryButton>
           </StepLayout>
         );
+      }
+
+      // ── Frame 11b: Adult Gift Vibe ─────────────────────────────────
+      case "adultGiftVibe":
+        return (
+          <StepLayout
+            title="Which gift styles are you open to sending?"
+            subtitle="Select all that apply"
+            plain
+            className="mx-auto max-w-[480px] px-2 pt-2 sm:pt-4"
+            titleClassName="text-[32px] leading-[1.12] tracking-[-0.02em] sm:text-[40px]"
+            contentClassName="mt-6 space-y-3"
+          >
+            <div className="mx-auto grid max-w-[360px] grid-cols-2 gap-2">
+              {([
+                { id: "practical" as AdultGiftVibeOption, label: "Practical" },
+                { id: "thoughtful" as AdultGiftVibeOption, label: "Thoughtful" },
+                { id: "playful" as AdultGiftVibeOption, label: "Playful / Funny" },
+                { id: "subtle_neutral" as AdultGiftVibeOption, label: "Subtle neutral colors" },
+                { id: "bright_vibrant" as AdultGiftVibeOption, label: "Bright, vibrant colors" },
+                { id: "open_anything" as AdultGiftVibeOption, label: "Open to anything that fits" },
+              ]).map((item) => (
+                <OptionCard
+                  key={item.id}
+                  active={data.adultGiftVibe.includes(item.id)}
+                  onClick={() => update({ adultGiftVibe: data.adultGiftVibe.includes(item.id) ? data.adultGiftVibe.filter((s) => s !== item.id) : [...data.adultGiftVibe, item.id] })}
+                  className={`!rounded-full !py-3.5 !text-[15px] !text-center ${item.id === "open_anything" ? "col-start-2" : ""}`}
+                >
+                  {item.label}
+                </OptionCard>
+              ))}
+            </div>
+            {error && stepId === "adultGiftVibe" && (
+              <p className="text-sm font-medium text-rose-600">{error}</p>
+            )}
+            <PrimaryButton onClick={goNext} disabled={!validateStep("adultGiftVibe", data)}>
+              Continue
+            </PrimaryButton>
+          </StepLayout>
+        );
 
       // ── Frame 12: Avoid ─────────────────────────────────────────────
       case "avoid":
@@ -721,7 +918,7 @@ export function ChildGiftFlow() {
             contentClassName="mt-14 space-y-5"
           >
             <textarea
-              placeholder="Examples: no princess items, no dinosaurs, avoid Bluey because they already have a lot..."
+              placeholder={isPet ? "Examples: no squeaky toys, no chicken...." : isAdult ? "Examples: no scented items, no nuts or other allergens..." : "Examples: no princess items, no dinosaurs, avoid Bluey because they already have a lot..."}
               value={data.otherAvoidance}
               onChange={(e) => update({ otherAvoidance: e.target.value })}
               rows={5}

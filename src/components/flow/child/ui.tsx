@@ -336,7 +336,7 @@ export const FlowStep = forwardRef<HTMLDivElement, { active: boolean; children: 
         data-active={active}
         aria-hidden={!active}
         tabIndex={active ? undefined : -1}
-        style={viewportHeight ? { minHeight: viewportHeight } : undefined}
+        style={viewportHeight ? { [active ? 'height' : 'minHeight']: viewportHeight } : undefined}
       >
         <div className="w-full py-4 sm:py-6">{children}</div>
       </div>
