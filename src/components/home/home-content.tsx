@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Ban, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Mail, Repeat2, ShieldCheck, ShoppingCart, Wallet } from "lucide-react";
+import { Ban, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Mail, ReceiptText, Repeat2, ShieldCheck, ShoppingCart, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const painPoints = [
@@ -65,32 +65,36 @@ const heroRollingWords = ["birthday", "holiday", "mother's day", "anniversary"];
 
 const faqs = [
   {
-    q: "How does Gifterbell pick gifts?",
-    a: "We use your recipient profile, occasion, budget, and style preferences to curate from trusted products. Every selection is made by our internal gifting team.",
+    q: "How does it work?",
+    a: "Tell us who the gift is for, the occasion, and your budget. You can order gifts for kids, adults, or pets. We source the gift through a third-party retailer and help get it delivered on time.",
   },
   {
-    q: "Can I see the gift before it's sent?",
-    a: "For concierge quality control, we finalize selections internally. You'll receive confirmation details right after your gift is sent.",
+    q: "Can I use this for one-time gifts and recurring occasions?",
+    a: "Yes. You can send a single gift or set up recurring occasions year after year. For scheduled gifts, we keep track of the date for you and send you a reminder ahead of time before the gift is about to be sent.",
   },
   {
-    q: "What if the recipient doesn't like the gift?",
-    a: "We optimize gift fit based on profile data and occasion details. If there's an issue, support can help with replacement options where eligible.",
+    q: "How do you know what gift to send if I don\u2019t know exactly what they want?",
+    a: "We use the details you provide to choose a gift that fits the recipient, occasion, and budget. And if you do not know all of their interests or preferences, that is okay \u2014 we can still source a great gift and often lean toward well-loved, popular options.",
   },
   {
-    q: "How do recurring gift plans work?",
-    a: "You choose cadence and budget once. We automatically source and ship each gift on schedule, and you can edit or pause plans anytime.",
+    q: "Will you stay within my budget?",
+    a: "Yes. We work within the budget range you select.",
   },
   {
-    q: "When will I be charged?",
-    a: "For one-time gifts, you're charged at checkout. For recurring plans, your saved payment method is charged when each scheduled gift is processed.",
+    q: "How does payment work?",
+    a: "At checkout, we authorize the order amount based on your selected budget and applicable fees. Once the gift is ordered, you will receive a final invoice with the actual charges.",
   },
   {
-    q: "Can I cancel or modify a gift plan?",
-    a: "Yes. You can edit recipients, budgets, and timing in your dashboard, or pause/cancel upcoming sends before they enter processing.",
+    q: "What add-ons are available?",
+    a: "We include a standard gift message, and you can add on a custom message if you\u2019d like. Gift wrapping is also available.",
   },
   {
-    q: "Do you ship internationally?",
-    a: "International support is rolling out by region. Enter your recipient address during setup and we'll confirm availability.",
+    q: "How far in advance should I place an order?",
+    a: "Orders must be placed at least 5 business days before the requested delivery date.",
+  },
+  {
+    q: "Can the recipient return the gift if needed?",
+    a: "Yes. Recipients can make easy returns using the gift receipt if something is not the right fit.",
   },
 ];
 
@@ -148,6 +152,14 @@ export function HomeContent() {
       text: (
         <>
           <strong>Set it and forget it</strong> with custom gift plans—no more dates to remember or gifts to manage
+        </>
+      ),
+    },
+    {
+      icon: <ReceiptText className="h-7 w-7" />,
+      text: (
+        <>
+          <strong>Gift receipt included</strong> for easy returns
         </>
       ),
     },
@@ -393,27 +405,26 @@ export function HomeContent() {
         </div>
       </section>
 
-      <section id="faq" className="bg-[#f2f2f6] py-20">
+      <section id="faq" className="bg-[#f2f2f6] py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-6xl font-extrabold leading-tight text-[#111b39]">Frequently asked questions</h2>
-            <p className="mt-4 text-2xl text-slate-500">Everything you need to know about Gifterbell</p>
+            <h2 className="text-4xl font-bold text-[#111b39]">FAQs</h2>
           </div>
 
-          <div className="mx-auto mt-14 max-w-5xl border-y border-slate-300/70">
+          <div className="mx-auto mt-10 max-w-4xl border-y border-slate-300/70">
             {faqs.map((faq, idx) => (
               <article key={faq.q} className="border-b border-slate-300/70 last:border-b-0">
                 <button
                   type="button"
                   onClick={() => setOpenFaq((prev) => (prev === idx ? null : idx))}
-                  className="flex w-full items-center justify-between gap-6 py-6 text-left"
+                  className="flex w-full items-center justify-between gap-4 py-4 text-left"
                 >
-                  <h3 className={`text-xl font-semibold ${openFaq === idx || idx === 0 ? "text-[#2ea79a]" : "text-[#111b39]"}`}>{faq.q}</h3>
+                  <h3 className="text-lg font-semibold text-[#111b39]">{faq.q}</h3>
                   <ChevronDown
-                    className={`h-7 w-7 shrink-0 transition-transform ${openFaq === idx ? "rotate-180 text-[#2ea79a]" : idx === 0 ? "text-[#2ea79a]" : "text-[#111b39]"}`}
+                    className={`h-5 w-5 shrink-0 transition-transform ${openFaq === idx ? "rotate-180 text-[#111b39]" : "text-[#111b39]"}`}
                   />
                 </button>
-                {openFaq === idx && <p className="pb-7 pr-16 text-lg leading-relaxed text-slate-500">{faq.a}</p>}
+                {openFaq === idx && <p className="pb-5 pr-12 text-base leading-relaxed text-[#111b39]">{faq.a}</p>}
               </article>
             ))}
           </div>
