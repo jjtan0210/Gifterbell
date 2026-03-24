@@ -1156,7 +1156,7 @@ export function ChildGiftFlow() {
                 onChange={(e) => update({ useCustomMessage: e.target.checked })}
                 className="h-5 w-5 rounded border-slate-300 text-[#2aa89c] focus:ring-[#2aa89c]"
               />
-              <span className="text-[15px] font-medium text-[#1a2748]">Send a custom message</span>
+              <span className="text-[15px] font-medium text-[#1a2748]">Send a custom message <span className="text-[13px] font-normal text-slate-400">(+$2.70)</span></span>
             </label>
             {data.useCustomMessage && (
               <div>
@@ -1192,12 +1192,18 @@ export function ChildGiftFlow() {
             contentClassName="mt-16 space-y-3"
           >
             <div className="grid gap-3 sm:grid-cols-2">
-              <OptionCard active={data.giftWrapped === "yes"} onClick={() => update({ giftWrapped: "yes" })} className="!rounded-full !text-center">
-                Yes
-              </OptionCard>
-              <OptionCard active={data.giftWrapped === "no"} onClick={() => update({ giftWrapped: "no" })} className="!rounded-full !text-center">
-                No
-              </OptionCard>
+              <div className="flex flex-col items-center gap-1">
+                <OptionCard active={data.giftWrapped === "yes"} onClick={() => update({ giftWrapped: "yes" })} className="!rounded-full !text-center w-full">
+                  Yes
+                </OptionCard>
+                <span className="text-[12px] text-slate-400">+$4.70</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <OptionCard active={data.giftWrapped === "no"} onClick={() => update({ giftWrapped: "no" })} className="!rounded-full !text-center w-full">
+                  No
+                </OptionCard>
+                <span className="text-[12px] text-transparent">+$4.70</span>
+              </div>
             </div>
             <PrimaryButton onClick={goNext} disabled={!validateStep("giftWrapped", data)}>
               Continue
@@ -1586,6 +1592,12 @@ export function ChildGiftFlow() {
                   {data.budget === "above_250" ? ` ($${data.customBudget})` : ""}
                 </p>
                 <p>Est. delivery: {getEstimatedDeliveryDate(data)}</p>
+                {data.useCustomMessage && (
+                  <p>Custom message: <span className="font-semibold">$2.70</span></p>
+                )}
+                {data.giftWrapped === "yes" && (
+                  <p>Gift wrapping: <span className="font-semibold">$4.70</span></p>
+                )}
               </div>
             </div>
 
